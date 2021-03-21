@@ -1,0 +1,41 @@
+- hosts: all
+  tasks:
+  - yum_repository:
+     name: mydocker
+     description: Docker Repo
+     file: /etc/yum.repos.d/mydocker
+     baseurl: https://download.docker.com/linux/centos/7/x86_64/stable
+     gpgcheck: no
+     enabled: true
+  - copy:
+     src: "index.html"
+     dest: "/index.html"
+  - command: "yum install docker-ce --nobest -y"
+  - package:
+     name:
+      - "yum-utils"
+      - "docker-ce, docker-ce-cli, containerd.io"
+      - "python3-pip"
+     state: present
+  - service:
+     name: "firewalld"
+     state: stopped
+  - ansible.posix.selinux:
+     policy: targeted
+     state: permissive
+  - service:
+     name: "docker"
+     state: started
+  - pip:
+     name: "docker"
+  - community.general.docker_image:
+     name: "httpd"
+     source: pull
+  - docker_container:
+     name: MyWebserverOS
+     image: httpd
+     state: started
+     detach: true
+     interactive: true
+     ports: "8082:80"
+     volumes: /:/usr/local/apache2/htdocs/
